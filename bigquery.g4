@@ -97,6 +97,7 @@ expr : number
 	 | expr AND expr
 	 | expr OR expr
 	 | analytic_function_invocation
+	 | function_invocation
 	 | cast_expr
 	 | '(' expr ')'
 	 | column_expr
@@ -127,11 +128,14 @@ join_type : INNER
 on_clause : ON bool_expression;
 
 
+function_invocation: function_name '(' expr (',' expr)* ')' ;
+
+
 /****
  * BEGIN windowing
  ****/
 
-analytic_function_invocation: function_name '(' expr (',' expr)* ')' OVER over_clause;
+analytic_function_invocation: function_invocation OVER over_clause;
 
 
 // TODO: named windows?
