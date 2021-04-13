@@ -55,6 +55,9 @@ window_statement : WINDOW window_name AS '(' window_definition ')';
 // Order Statement can contain any number of comma separated expressions to order by.
 order_clause : ORDER BY expr (ASC | DESC)? (',' expr (ASC | DESC)?)* ;
 
+// Order Statement can contain any number of comma separated expressions to order by.
+partition_clause : PARTITION BY expr (',' expr ?)* ;
+
 // Limit Statement can contain a limit number and an optional offset
 limit_clause : LIMIT count (OFFSET skip_rows)? ;
 
@@ -93,7 +96,7 @@ expr : number
 					) 
 	 | expr AND expr
 	 | expr OR expr
- 	 | function_name '(' ((expr (',' expr)*) | '*') ')'
+	 | analytic_function_invocation
 	 | cast_expr
 	 | '(' expr ')'
 	 | column_expr
@@ -122,6 +125,66 @@ join_type : INNER
 
 // On Clause can contain a single boolean expression
 on_clause : ON bool_expression;
+
+
+/****
+ * BEGIN windowing
+ ****/
+
+analytic_function_invocation: function_name '(' expr (',' expr)* ')' OVER over_clause;
+
+
+// TODO: named windows?
+over_clause: 
+	'(' window_specification ')'
+	;
+
+window_specification:
+	( PARTITION BY column_name (',' column_name)* )?
+	order_clause?
+	window_frame_clause?
+;
+
+window_frame_clause:
+	( ROWS | RANGE ) ( frame_start | frame_between );
+
+frame_start:
+	unbounded_preceding | numeric_preceding | current_row;
+
+//begin between clause
+frame_between:
+	BETWEEN  unbounded_preceding AND frame_end_a
+    | BETWEEN numeric_preceding AND frame_end_a
+    | BETWEEN current_row AND frame_end_b
+    | BETWEEN numeric_following AND frame_end_c;
+
+frame_end_a:
+  numeric_preceding | current_row | numeric_following | unbounded_following ;
+
+frame_end_b:
+  current_row | numeric_following | unbounded_following;
+
+frame_end_c:
+  numeric_following | unbounded_following;
+
+unbounded_preceding:
+  UNBOUNDED PRECEDING;
+
+numeric_preceding:
+  integer_type PRECEDING;
+
+unbounded_following:
+  UNBOUNDED FOLLOWING;
+
+numeric_following:
+  integer_type FOLLOWING;
+
+current_row:
+  CURRENT ROW;
+
+/****
+ * END windowing
+ ****/
 
 // Set Operation expands to the keywords for each type of set operation
 set_op : UNION (ALL | DISTINCT)? 
@@ -343,6 +406,7 @@ CREATE : C R E A T E ;
 CROSS : C R O S S ;
 CUBE : C U B E ;
 CURRENT : C U R R E N T ;
+CURRENT_TIMESTAMP : C U R R E N T [_] T I M E S T A M P ;
 DEFAULT : D E F A U L T ;
 DEFINE : D E F I N E ;
 DESC : D E S C ;
@@ -399,6 +463,7 @@ PARTITION : P A R T I T I O N ;
 PRECEDING : P R E C E D I N G ;
 PROTO : P R O T O ;
 RANGE : R A N G E ;
+ROW : R O W ;
 RECURSIVE : R E C U R S I V E ;
 REPLACE : R E P L A C E;
 RESPECT : R E S P E C T ;
@@ -432,8 +497,9 @@ WITHIN : W I T H I N ;
 // Whitespace
 WS : [ \t\r\n]+ -> skip ;
 // Comments
-CMT : '--' ~[\r\n]* -> skip ;
-M_CMT : '/*' .*? '*/' -> skip;
+CMT 	: '--' ~[\r\n]* -> skip ;
+B_CMT  : '#' ~[\r\n]* -> skip ;
+M_CMT : '/*' .*? '*/' -> skip ;
 // Quoted String
 QUOTED_STRING : '"' (~'"' | '\\' '"')* '"' 
 			  | '\'' (~'\'' | '\\' '\'' )* '\'' ;
