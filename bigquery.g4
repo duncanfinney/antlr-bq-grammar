@@ -59,7 +59,7 @@ order_clause : ORDER BY expr (ASC | DESC)? (',' expr (ASC | DESC)?)* ;
 partition_clause : PARTITION BY expr (',' expr ?)* ;
 
 // Limit Statement can contain a limit number and an optional offset
-limit_clause : LIMIT count (OFFSET skip_rows)? ;
+limit_clause : LIMIT integer_type (OFFSET skip_rows)? ;
 
 // Unary Operators
 unary_operator : '-' | '~' | NOT;
@@ -128,7 +128,7 @@ join_type : INNER
 on_clause : ON bool_expression;
 
 
-function_invocation: function_name '(' expr (',' expr)* ')' ;
+function_invocation: function_name '(' ( expr (',' expr)* | ASTERISK ) ')' ;
 
 
 /****
@@ -217,8 +217,6 @@ window_name : ;
 // Window Definition is WIP
 window_definition : ;
 
-// Count can be any number
-count : number;
 // Skip rows can be any number
 skip_rows : number;
 //with_query_name : ;
@@ -543,3 +541,18 @@ fragment W : [wW];
 fragment X : [xX];
 fragment Y : [yY];
 fragment Z : [zZ];
+
+
+//* SYMBOLS */
+PERCENT:                   '%';
+AMPERSAND:                 '&';
+LEFT_PAREN:                '(';
+RIGHT_PAREN:               ')';
+DOUBLE_ASTERISK:           '**';
+ASTERISK:                  '*';
+PLUS_SIGN:                 '+';
+MINUS_SIGN:                '-';
+COMMA:                     ',';
+SOLIDUS:                   '/';
+AT_SIGN:                   '@';
+ASSIGN_OP:                 ':=';
