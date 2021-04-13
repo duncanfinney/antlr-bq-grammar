@@ -96,6 +96,7 @@ expr : number
 					) 
 	 | expr AND expr
 	 | expr OR expr
+	 | count_invocation
 	 | analytic_function_invocation
 	 | function_invocation
 	 | cast_expr
@@ -128,8 +129,13 @@ join_type : INNER
 on_clause : ON bool_expression;
 
 
-function_invocation: function_name '(' ( expr (',' expr)* | ASTERISK ) ')' ;
+function_invocation: function_name '(' ( expr (',' expr)* | ASTERISK ) ')' 
+								  	| function_name '(' ')' ;
 
+
+count_invocation: COUNT '(' distinct? ( expr (',' expr)* | ASTERISK ) ')';
+
+distinct: DISTINCT ;
 
 /****
  * BEGIN windowing
@@ -144,7 +150,7 @@ over_clause:
 	;
 
 window_specification:
-	( PARTITION BY column_name (',' column_name)* )?
+	( PARTITION BY column_expr (',' column_expr)* )?
 	order_clause?
 	window_frame_clause?
 ;
@@ -239,8 +245,8 @@ function_name : name;
 join_name : name;
 member_name : name;
 project_name : name;
-struct_name : name;
-table_name : name;
+struct_name : (name '.')? name;
+table_name : name '*'?;
 table_expr : (((project_name '.')? dataset_name '.')? table_name)
 		   | '`' table_expr '`';
 
@@ -319,7 +325,6 @@ keyword : ALL
 		| GROUPS 
 		| HASH 
 		| HAVING 
-		| IF 
 		| IGNORE 
 		| IN 
 		| INNER 
@@ -409,6 +414,7 @@ CROSS : C R O S S ;
 CUBE : C U B E ;
 CURRENT : C U R R E N T ;
 CURRENT_TIMESTAMP : C U R R E N T [_] T I M E S T A M P ;
+COUNT: C O U N T;
 DEFAULT : D E F A U L T ;
 DEFINE : D E F I N E ;
 DESC : D E S C ;
@@ -432,7 +438,7 @@ GROUPING : G R O U P I N G ;
 GROUPS : G R O U P S ;
 HASH : H A S H ;
 HAVING : H A V I N G ;
-IF : I F ;
+// IF : I F ;
 IGNORE : I G N O R E ;
 IN : I N ;
 INNER : I N N E R ;
@@ -497,7 +503,8 @@ WITHIN : W I T H I N ;
 
 
 // Whitespace
-WS : [ \t\r\n]+ -> skip ;
+WS : (' '|'\r'|'\t'|'\u000C'|'\n'|'\u00A0')+ -> skip ;
+
 // Comments
 CMT 	: '--' ~[\r\n]* -> skip ;
 B_CMT  : '#' ~[\r\n]* -> skip ;
