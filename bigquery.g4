@@ -30,7 +30,7 @@ from_statement : FROM from_item (',' from_item )* ;
 // From Item - WIP 
 // From Items can be table expressions (project.dataset.table, Query Statements (subqueries), or a valid array expression).
 // Array expressions are still WIP
-from_item : table_expr (AS? alias_name)?  (FOR SYSTEM TIME AS OF string)? 
+from_item : table_expr (AS? alias_name)?  (FOR SYSTEM TIME AS OF string_literal)? 
 		  | from_item join_type? JOIN from_item (on_clause | using_clause)
 		  | '(' query_statement ')' (AS? alias_name)? 
 		  | field_path
@@ -66,7 +66,7 @@ unary_operator : '-' | '~' | NOT;
 
 // Main expression rule can expand to any valid BigQuery expression. Still WIP
 expr : number
-	 | string
+	 | string_literal
 	 | array_name '[' (OFFSET | ORDINAL | SAFE_OFFSET | SAFE_ORDINAL ) '(' expr ')' ']'
 	 | unary_operator expr
 	 | expr ('*' | '/') expr
@@ -261,7 +261,7 @@ FLOAT : ('+' | '-')? DIGITS '.' DIGITS? ('e' ('+' | '-') DIGITS)?
 DIGITS : DIGIT+ ;
 
 // STRING LITERAL
-string : quoted_string 
+string_literal : quoted_string 
 	   | triple_quoted_string 
 	   | raw_string 
 	   | byte_string 
